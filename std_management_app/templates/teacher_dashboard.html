@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; color: #333; }
+        .dashboard-container { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); padding: 40px; width: 90%; max-width: 900px; text-align: center; }
+        .header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .header h1 { font-size: 2.2em; color: #333; margin: 0; font-weight: 700; }
+        .logout-form { margin: 0; }
+        .logout-form button { background-color: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; font-weight: 600; font-family: 'Poppins', sans-serif; transition: background-color 0.3s ease; }
+        .logout-form button:hover { background-color: #c82333; }
+        h2.section-title { font-size: 1.8em; color: #555; margin-top: 30px; margin-bottom: 25px; font-weight: 600; }
+        .subject-grid { list-style-type: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; justify-content: center; }
+        .subject-card { background-color: #fcfcfc; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); padding: 25px; text-align: left; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .subject-card:hover { transform: translateY(-5px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); }
+        .subject-card h3 { font-size: 1.5em; color: #007bff; margin-top: 0; margin-bottom: 15px; font-weight: 600; }
+        .subject-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .subject-actions a, .subject-actions button { display: block; text-decoration: none; background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 20px; font-weight: 500; transition: background-color 0.3s ease; text-align: center; font-family: 'Poppins', sans-serif; cursor: pointer; }
+        .subject-actions a:hover, .subject-actions button:hover { background-color: #0056b3; }
+        .subject-actions a.attendance-link { background-color: #28a745; }
+        .subject-actions a.attendance-link:hover { background-color: #218838; }
+        .subject-actions a.resume-link { background-color: #ffc107; color: #333; }
+        .subject-actions a.resume-link:hover { background-color: #e0a800; }
+        .no-subjects { font-size: 1.1em; color: #777; margin-top: 20px; }
+        
+        /* NEW: Active/Inactive status bars */
+        .status-bar {
+            text-align: center;
+            padding: 8px;
+            border-radius: 5px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+        .status-active { background-color: #d4edda; color: #155724; }
+        .status-inactive { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>{{ teacher_name }}</h1>
+            <form class="logout-form" method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+            </form>
+        </div>
+
+        <h2 class="section-title">Your Subjects</h2>
+        {% if subjects_with_sessions %}
+            <ul class="subject-grid">
+                {% for subject in subjects_with_sessions %}
+                    <li class="subject-card">
+                        <h3>{{ subject.name }}</h3>
+
+                        {% if subject.active_session %}
+                            <div class="status-bar status-active">
+                                <i class="fas fa-dot-circle"></i> Session Active since {{ subject.active_session.start_time|date:"h:i A" }}
+                            </div>
+                        {% else %}
+                            <div class="status-bar status-inactive">
+                                Session Inactive
+                            </div>
+                        {% endif %}
+                <div class="subject-actions">
+                    
+                    {% if subject.active_session %}
+                        <a href="{% url 'scanner_view' subject.active_session.id %}" class="resume-link">
+                            <i class="fas fa-play"></i> Resume Scanning
+                        </a>
+                        
+                        <form action="{% url 'end_session' subject.active_session.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" style="background-color: #dc3545; color: white;">
+                                <i class="fas fa-times-circle"></i> End Session
+                            </button>
+                        </form>
+                    {% endif %}
+
+                    <form action="{% url 'start_session' subject.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" style="background-color: #007bff; color: white;">
+                            <i class="fas fa-power-off"></i> Start New Session
+                        </button>
+                        {% if subject.active_session %}
+                            <small style="color: #dc3545; display: block; margin-top: 5px;">*This will end the current active session.</small>
+                        {% endif %}
+                    </form>
+                    
+                    <hr style="width: 50%; border-top: 1px dashed #ccc; margin: 15px auto;">
+
+                    <a href="{% url 'subject_history' subject.id %}" class="attendance-link" style="background-color: #007bff;">
+                        <i class="fas fa-history"></i> View Full Subject History
+                    </a>
+                    
+                    {% if subject.sessions %}
+                        {% for session in subject.sessions|slice:":3" %}
+                            <a href="{% url 'attendance_list' session.id %}" class="attendance-link">
+                                <i class="fas fa-calendar-alt"></i> View Log: {{ session.start_time|date:"F j, Y h:i A" }}
+                            </a>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="no-subjects">You are not assigned to any subjects yet.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

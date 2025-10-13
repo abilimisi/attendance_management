@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History: {{ subject.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { background: #fff; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); width: 90%; max-width: 800px; text-align: center; margin-bottom: 30px; }
+        h1 { color: #333; font-size: 2.5em; margin-bottom: 5px; }
+        h2 { color: #555; margin-top: 0; margin-bottom: 30px; font-weight: 600; }
+        .session-list { list-style: none; padding: 0; text-align: left; width: 100%; }
+        .session-item { 
+            background: #fcfcfc; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            margin-bottom: 10px; 
+            padding: 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap;
+        }
+        .session-item span { font-weight: 600; color: #555; }
+        .session-item a { 
+            text-decoration: none; 
+            background-color: #007bff; 
+            color: white; 
+            padding: 8px 15px; 
+            border-radius: 20px; 
+            font-weight: 500; 
+            transition: background-color 0.3s;
+            margin-top: 5px;
+        }
+        .session-item a:hover { background-color: #0056b3; }
+        .active-tag { background-color: #ffc107; color: #333; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; margin-left: 10px; }
+        .back-link { display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Attendance History</h1>
+        <h2>Subject: {{ subject.name }}</h2>
+        
+        <ul class="session-list">
+            {% if active_session %}
+            <li class="session-item" style="background: #e6ffed; border-color: #28a745;">
+                <span>
+                    <i class="fas fa-clock" style="color:#28a745;"></i> 
+                    **CURRENT ACTIVE SESSION** (Started: {{ active_session.start_time|date:"F j, Y h:i A" }})
+                </span>
+                <a href="{% url 'attendance_list' active_session.id %}" style="background-color: #28a745;">View Live Details</a>
+            </li>
+            {% endif %}
+
+            {% for session in all_sessions %}
+            <li class="session-item">
+                <span>
+                    <i class="fas fa-calendar-check"></i> 
+                    Session Date: {{ session.start_time|date:"F j, Y h:i A" }}
+                </span>
+                <a href="{% url 'attendance_list' session.id %}">View Details</a>
+            </li>
+            {% empty %}
+            {% if not active_session %}
+                <p style="text-align:center;">No completed sessions recorded for this subject yet.</p>
+            {% endif %}
+            {% endfor %}
+        </ul>
+        
+        <a href="{% url 'teacher_dashboard' %}" class="back-link">Back to Dashboard</a>
+    </div>
+</body>
+</html>

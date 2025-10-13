@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Log for {{ subject_name }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { background: #fff; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); width: 90%; max-width: 1000px; text-align: center; margin-bottom: 30px; }
+        h1 { color: #333; font-size: 2.5em; margin-bottom: 5px; }
+        .info-bar { background-color: #e9ecef; padding: 10px; margin-bottom: 20px; border-radius: 5px; font-size: 1.1em; color: #555; display: flex; justify-content: space-between; align-items: center; }
+        .info-bar span { font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; vertical-align: top; }
+        th { background-color: #007bff; color: white; text-transform: uppercase; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .active-status { color: #007bff; font-weight: bold; }
+        .logged-out { color: green; font-weight: bold; }
+        .absent { color: red; font-weight: bold; }
+        .download-btn { display: inline-block; padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px; }
+        .download-btn:hover { background-color: #218838; }
+        .back-link { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Attendance Log for {{ subject_name }}</h1>
+        <div class="info-bar">
+            <span>Teacher: {{ teacher_name }}</span>
+            <span>Session Started: {{ session_date|date:"F j, Y h:i A" }}</span>
+        </div>
+        <div class="info-bar">
+            <span>Total Students Count: {{ total_students }}</span>
+            <span>Total Students Logged in: {{ present_count }}</span>
+        </div>
+        
+        <a href="{% url 'download_attendance' session_id %}" class="download-btn">
+            <i class="fas fa-download"></i> Download CSV Report
+        </a>
+        
+        <h2>Attendance Details</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Reg No.</th>
+                    <th>Current Status</th>
+                    <th>Check-In / Check-Out Log</th>
+                    <th>Total Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student_data in student_list %}  <tr>
+                        <td>{{ student_data.name }}</td>
+                        <td>{{ student_data.reg_no }}</td>
+                        <td class="{% if student_data.current_status == 'IN (Active)' %}active-status{% elif student_data.current_status == 'OUT (Completed)' %}logged-out{% else %}absent{% endif %}">
+                            {{ student_data.current_status }}
+                        </td>
+                        
+                        <td>
+                            {% for log in student_data.logs %}
+                                <small>
+                                    IN: {{ log.time_in|date:"h:i A" }} / OUT: 
+                                    {% if log.time_out %}{{ log.time_out|date:"h:i A" }}{% else %}<span style="color: red;">ACTIVE</span>{% endif %}
+                                </small>
+                                {% if not forloop.last %}<br>{% endif %}
+                            {% empty %}
+                                -
+                            {% endfor %}
+                        </td>
+                        
+                        <td>
+                            {% for log in student_data.logs %}
+                                <small>{{ log.duration }}</small>
+                                {% if not forloop.last %}<br>{% endif %}
+                            {% empty %}
+                                -
+                            {% endfor %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <a href="{% url 'teacher_dashboard' %}" class="download-btn back-link">Back to Dashboard</a>
+    </div>
+</body>
+</html>

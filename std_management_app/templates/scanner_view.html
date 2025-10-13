@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan Attendance for {{ subject.name }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        .container { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); text-align: center; width: 90%; max-width: 500px; }
+        h1 { color: #333; margin-bottom: 10px; font-size: 2em; }
+        
+        /* NEW STYLING FOR STATUS AND COUNTER */
+        .session-status-bar {
+            display: flex;
+            justify-content: space-between; /* Space out the counter and the subject name */
+            align-items: center;
+            width: 100%;
+            margin-bottom: 25px;
+            font-size: 1.1em;
+            color: #555;
+            padding: 8px 0;
+        }
+        .live-counter-box {
+            font-size: 1.5em;
+            color: #28a745; /* Green color for the count */
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .subject-name {
+            font-size: 1em;
+            color: #666;
+            font-weight: 600;
+        }
+        /* END NEW STYLING */
+
+        #interactive.viewport { width: 100%; height: 350px; border: 3px solid #007bff; border-radius: 15px; overflow: hidden; position: relative; }
+        #interactive.viewport canvas, #interactive.viewport video { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .scan-line { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background-color: red; box-shadow: 0 0 10px red; animation: scanning 2s infinite ease-in-out; }
+        @keyframes scanning { 0% { top: 10%; } 50% { top: 90%; } 100% { top: 10%; } }
+        .status-message { margin-top: 20px; font-size: 1.1em; font-weight: bold; }
+        .end-session-btn { background-color: #dc3545; color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: 600; margin-top: 15px; }
+        .end-session-btn:hover { background-color: #c82333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Scan Attendance</h1>
+        
+        <div class="session-status-bar">
+            <span class="live-counter-box">
+                <i class="fas fa-users"></i> Scanned: <span id="live-count">0</span>
+            </span>
+            <span class="subject-name">Subject: **{{ subject.name }}**</span>
+        </div>
+        <div id="interactive" class="viewport">
+            <div class="scan-line"></div>
+        </div>
+        <p class="status-message" id="status-message">Loading camera...</p>
+        
+        <a href="{% url 'teacher_dashboard' %}" class="back-link">Back to Dashboard</a>
+        <form action="{% url 'end_session' session_id %}" method="post" style="margin-top: 25px;">
+            {% csrf_token %}
+            <button type="submit" class="end-session-btn">
+                <i class="fas fa-times-circle"></i> End Session Now & Go Back
+            </button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const sessionId = {{ session_id }};
+        const statusMessage = document.getElementById('status-message');
+        const liveCountElement = document.getElementById('live-count');
+        
+        let lastScannedCode = null;
+        let lastScanTime = null;
+
+        const processScanOnServer = async (code) => {
+            console.log("Processing scanned barcode: " + code);
+            statusMessage.textContent = `Scanned ID: ${code}. Marking attendance...`;
+            statusMessage.className = 'status-message';
+            try {
+                const response = await fetch(`/teacher/process-scan/${sessionId}/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify({ student_id: code })
+                });
+                const data = await response.json();
+                
+                if (data.live_count !== undefined) {
+                    liveCountElement.textContent = data.live_count;
+                }
+
+                if (data.status === 'success') {
+                    Swal.fire({ title: 'Attendance Recorded!', html: `<b>${data.message}</b><br>Reg No: ${code}`, icon: 'success', timer: 2000, timerProgressBar: true, position: 'top-end', showConfirmButton: false });
+                } else if (data.status === 'info') {
+                    Swal.fire({ title: 'Already Logged', text: data.message, icon: 'info', timer: 2000, timerProgressBar: true, position: 'top-end', showConfirmButton: false });
+                } else {
+                    Swal.fire({ title: 'Error', text: data.message, icon: 'error', timer: 3000, timerProgressBar: true, position: 'top-end', showConfirmButton: false });
+                }
+            } catch (error) {
+                console.error('Network Error:', error);
+                Swal.fire({ title: 'Network Error', text: 'Could not connect to the server. Please try again.', icon: 'error', timer: 3000, timerProgressBar: true, position: 'top-end', showConfirmButton: false });
+            } finally {
+                statusMessage.textContent = 'Ready to scan the next student.';
+                statusMessage.className = 'status-message';
+            }
+        };
+
+        const handleScan = (code) => {
+            const now = new Date().getTime();
+            if (code === lastScannedCode && (now - lastScanTime < 5000)) { return; }
+            lastScannedCode = code;
+            lastScanTime = now;
+            processScanOnServer(code);
+        };
+
+        if (!sessionId) {
+            statusMessage.textContent = 'Error: No session started. Please go back to your dashboard.';
+            statusMessage.className = 'status-message error';
+        } else {
+            Quagga.init({
+                inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { width: 640, height: 480, facingMode: "environment" } },
+                decoder: { readers: ["code_128_reader", "ean_reader", "upc_reader"] }
+            }, function(err) {
+                if (err) {
+                    console.error("Quagga initialization error:", err);
+                    statusMessage.textContent = `Error initializing camera. (Error: ${err.name})`;
+                    statusMessage.className = 'status-message error';
+                    Swal.fire({ icon: 'error', title: 'Camera Access Denied', text: 'Please allow camera access.', confirmButtonText: 'OK' });
+                    return;
+                }
+                console.log("Initialization finished. Ready to start.");
+                Quagga.start();
+                statusMessage.textContent = 'Camera is active. Please scan a student barcode.';
+                statusMessage.className = 'status-message';
+            });
+            Quagga.onDetected(function(result) {
+                const code = result.codeResult.code;
+                handleScan(code);
+            });
+        }
+    </script>
+</body>
+</html>
