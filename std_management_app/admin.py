@@ -8,6 +8,7 @@ class StudentAdmin(admin.ModelAdmin):
     list_display = ('name', 'reg_no', 'program', 'year')
     search_fields = ('name', 'reg_no')
     list_filter = ('program', 'year')
+    ordering = ('reg_no',)
 
 @admin.register(Teacher)
 class TeacherAdmin(admin.ModelAdmin):

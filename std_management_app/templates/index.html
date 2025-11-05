@@ -7,23 +7,45 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; color: #333; }
-        .dashboard-container { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); padding: 40px; width: 90%; max-width: 900px; text-align: center; }
+        body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; 
+        margin: 0; padding: 20px; display: flex; flex-direction: column; 
+        align-items: center; justify-content: center; min-height: 100vh; color: #333; }
+
         .header { margin-bottom: 40px; }
-        .header h1 { font-size: 2.8em; color: #333; margin-bottom: 10px; font-weight: 700; }
+        .dashboard-container {
+        background: transparent;
+        border-radius: 0; 
+        box-shadow: none;  
+        width: 100%; 
+        max-width: 1200px; 
+        text-align: center;
+        }
+
+        .header h1 { font-size: 2.3em; color: #333; margin-bottom: 10px; font-weight: 700; }
         .header p { font-size: 1.1em; color: #666; margin-bottom: 0; }
-        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; justify-content: center; }
-        .card { background-color: #fcfcfc; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: transform 0.2s ease, box-shadow 0.2s ease; text-decoration: none; color: inherit; }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+        gap: 25px; justify-content: center; }
+        
+
+        .card { background-color: #fcfcfc; border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); padding: 30px; display: flex;flex-direction: column; 
+        align-items: center; justify-content: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease; text-decoration: none;
+        color: inherit; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); }
         .card .icon { font-size: 3em; margin-bottom: 15px; }
         .card h2 { font-size: 1.6em; margin-bottom: 10px; color: #444; font-weight: 600; }
         .card p { font-size: 1em; color: #777; line-height: 1.5; margin-bottom: 20px; }
-        .card .value { font-size: 2.5em; font-weight: 700; color: #28a745; margin-top: 15px; }
-        .card a { display: inline-block; background-color: #007bff; color: white; padding: 10px 25px; border-radius: 25px; text-decoration: none; font-weight: 600; transition: background-color 0.3s ease; }
+        .student-count-card .value { font-size: 2.5em; font-weight: 700; color: #28a745; margin-top: 15px; }
+        .admin-card .value { font-size: 2.5em; font-weight: 700; color: #6f42c1; margin-top: 15px; }
+        .card a { display: inline-block; background-color: #007bff; color: white; 
+        padding: 10px 25px; border-radius: 25px; text-decoration: none; font-weight: 600;
+        transition: background-color 0.3s ease; }
         .card a:hover { background-color: #0056b3; }
-        .student-count-card { background-color: #f0fdf4; border: 1px solid #d4edda; }
+     
         .faculty-card .icon { color: #28a745; }
         .admin-card .icon { color: #6f42c1; }
+        .admin-card a { background-color: #6f42c1; }
         .student-count-card .icon { color: #28a745; }
         .faculty-card a { background-color: #28a745; }
         .faculty-card a:hover { background-color: #218838; }
@@ -32,26 +54,33 @@
 <body>
     <div class="dashboard-container">
         <div class="header">
-            <h1>Welcome to the College Portal</h1>
-            <p>Your gateway to efficient attendance management.</p>
+            <h1>Lab IN/OUT Management System</h1>
+            <p>Laboratory attendance tracking</p>
         </div>
 
         <div class="cards-grid">
+             <div class="card admin-card">
+                <i class="fas fa-user-shield icon"></i>
+                <h2>Admin Panel</h2>
+                <p>System administration and user management</p>
+                <a href="/admin/">Admin Login</a>
+            </div>
+
             <div class="card faculty-card">
                 <i class="fas fa-user-tie icon"></i>
                 <h2>Faculty Portal</h2>
-                <p>Access your dashboard, manage subjects, and take attendance.</p>
+                <p>manage students,subjects,and sessions</p>
                 <a href="{% url 'login' %}">Faculty Login</a>
             </div>
 
             <div class="card admin-card">
-                <i class="fas fa-user-shield icon"></i>
-                <h2>Admin Panel</h2>
-                <p>Manage users, subjects, and system configurations.</p>
-                <a href="/admin/">Admin Login</a>
+                <i class="fas fa-user-tie icon"></i>
+                <h2>Total Teachers</h2>
+                <p>Number of teachers currently registered in the system.</p>
+                <div class="value">{{ teacher_count }}</div>
             </div>
 
-            <div class="card student-count-card">
+             <div class="card student-count-card">
                 <i class="fas fa-graduation-cap icon"></i>
                 <h2>Total Students</h2>
                 <p>Number of students currently registered in the system.</p>

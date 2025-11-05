@@ -13,8 +13,10 @@ from django.http import HttpResponse
 
 def home_view(request):
     student_count = Student.objects.count()
+    teacher_count = Teacher.objects.count()
     context = {
-        'student_count': student_count
+        'student_count': student_count,
+        'teacher_count' : teacher_count
     }
     return render(request, 'index.html', context)
 
